@@ -8,7 +8,7 @@ let
   nvm = pkgs.callPackage ./nvm.nix { };
   rbenv = pkgs.callPackage ./rbenv.nix { };
   fasd = pkgs.callPackage ./fasd.nix { };
-  prompt = pkgs.callPackage ./prompt.nix { };
+  # prompt = pkgs.callPackage ./prompt.nix { };
   nix = pkgs.callPackage ./nix.nix { };
   haskell = pkgs.callPackage ./haskell.nix { };
   functions = pkgs.callPackage ./functions.nix { };
@@ -148,7 +148,7 @@ in
         #########################################################
         #########################################################
 
-      } // colors // pyenv.variables // prompt.variables;
+      } // colors // pyenv.variables; # // prompt.variables;
 
       shellAliases = {
         # ===================== #
@@ -301,8 +301,8 @@ in
 
         rbenv.initConfig
 
-        prompt.functions
-        prompt.initConfig
+        # prompt.functions
+        # prompt.initConfig
 
         # this is all rust needs
         (if builtins.pathExists "${homedir}/.cargo/bin" then ''safe_path_add "${homedir}/.cargo/bin"'' else "")
