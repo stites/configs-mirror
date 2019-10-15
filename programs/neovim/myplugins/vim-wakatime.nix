@@ -49,9 +49,9 @@ in
     homepage = https://www.github.com/wakatime/vim-wakatime;
     rev = "29d14cca6593a4809a31cfc3565a366d87426daf";
   }).overrideAttrs(old: {
-    # configurePhase = ''
-    #   export WAKATIME_HOME="$HOME/.config/wakatime"
-    # '';
+    configurePhase = ''
+      export WAKATIME_HOME="$HOME/.config/wakatime"
+    '';
   });
   extraConfig = [
     "let g:wakatime_PythonBinary = '${notPython}'"

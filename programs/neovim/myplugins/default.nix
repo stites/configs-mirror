@@ -34,6 +34,7 @@ let
     ./vim-airline-theme.nix
     ./fzf-vim.nix
     ./vim-gitgutter.nix
+    ./rainbow.nix
   ];
 
   coc-plugins = let usetabnine = true; in [
