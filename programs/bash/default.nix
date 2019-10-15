@@ -18,6 +18,7 @@ let
   hostExtraConfig = host.bash.extraConfig;
 in
 {
+  home.packages = [pkgs.wakatime];
   xdg.dataFile = {
     "remarkable-upload" = {
       executable = true;
@@ -326,6 +327,13 @@ in
         safe_path_add "$TMUXIFIER/bin"
         safe_source "$TMUXIFIER/init.sh"
         safe_source "$TMUXIFIER/completion/tmuxifier.bash"
+        ''
+        # Not ready for this:
+        # ''
+        #   safe_source "$XDG_DATA_HOME/bash-wakatime.sh"
+        # ''
+        ''
+        export WAKATIME_HOME="$HOME/.config/wakatime"
         ''
 
         host.bash.extraConfig

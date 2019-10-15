@@ -10,6 +10,8 @@ let
     ./vim-sandwich.nix
     ./vim-commentary.nix
     ./vim-eunuch.nix
+    ./vim-plug.nix
+    # ./vim-wakatime.nix
   ] ++ tmux-plugins
     ++ txt-plugins
     ++ layout-plugins
