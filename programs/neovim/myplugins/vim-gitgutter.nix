@@ -3,7 +3,7 @@
   description = "show git changes in the gutter";
   pkg = pkgs.vimPlugins.vim-gitgutter;
   extraConfig = [
-    ''let g:gitgutter_git_executable="${pkgs.git}/bin/git"''
+    ''let g:gitgutter_git_executable="${pkgs.git}/bin/git"'' # must be set
 
     # "let g:gitgutter_map_keys = 0"      # Don't use vim-gitgutter mappings
 
