@@ -39,40 +39,84 @@ with pkgs;
     extraConfig = let
       inherit (pkgs.callPackage ./compile.nix {})
         compile quote compile-block expand-with-default-flags;
+
+      unbind-key = key: # alias to unbind
+        "unbind-key ${key}";
+
+      bind-key = key: to: { repeatable ? false, table ? null, args ? []}: with lib.strings; # alias to bind
+        let
+          opt = lib.optionalString;
+          _flags =
+            if repeatable || table == "root"
+            then concatStrings [
+              "-" (opt repeatable "r") (opt (table == "root") "n")
+            ] + opt (table != null && table != "root") " -T ${table}"
+            else "";
+        in "bind-key ${_flags} ${key} ${to} ${concatStringsSep " " args}";
+
     in with lib.strings; compile [
       # make sure new windows start from older ones
-      ''
-      bind c   new-window      -c "#{pane_current_path}"
-      bind %   split-window -h -c "#{pane_current_path}"
-      bind '"' split-window -v -c "#{pane_current_path}"
-      ''
+      (bind-key  "c"   "new-window"   {args = ["-c"      (quote "#{pane_current_path}")];})
+      (bind-key  "%"   "split-window" {args = ["-c" "-h" (quote "#{pane_current_path}")];})
+      (bind-key "'\"'" "split-window" {args = ["-c" "-v" (quote "#{pane_current_path}")];})
 
       # Sync panes
-      "bind y setw synchronize-panes"
+      (bind-key "y" "setw" {args = ["synchronize-panes"];})
 
       # ++++++++++++++++++++++++++++ #
       #      use vi copy/paste       #
       # ++++++++++++++++++++++++++++ #
       # see: http://bit.ly/1LuQQ8h
-      ''
-      unbind [
-      bind Escape copy-mode
-      unbind p
-      ''
+      (unbind-key "[")
+      (bind-key "Escape" "copy-mode" {})
+      (unbind-key "p")
+
       # https://unix.stackexchange.com/questions/67673/copy-paste-text-selections-between-tmux-and-the-clipboard#72340
       # https://unix.stackexchange.com/questions/131011/use-system-clipboard-in-vi-copy-mode-in-tmux
-      ''
-      bind p run "tmux set-buffer \"$(xclip -o)\"; tmux paste-buffer"
-      bind-key -T copy-mode-vi 'v' send -X begin-selection
-      bind-key -T copy-mode-vi 'V' send -X select-line
-      bind-key -T copy-mode-vi 'r' send -X rectangle-toggle
-      bind-key -T copy-mode-vi 'y' send -X copy-pipe-and-cancel "xclip -i -sel p -f | xclip -i -sel c"
-      ''
-      # bind-key -T copy-mode-vi 'y' send -X copy-pipe-and-cancel "xclip -in -selection clipboard"
+      (bind-key "p" "run" { args = [("'tmux set-buffer \"$(xclip -o)\"; tmux paste-buffer'")];})
+
+      (let
+        bind-copy-mode-key = k: args:
+          bind-key "'${k}'" "send" { table = "copy-mode-vi"; args = ["-X"] ++ args; };
+      in [
+        (bind-copy-mode-key "'v'" ["begin-selection"])
+        (bind-copy-mode-key "'V'" ["select-line"])
+        (bind-copy-mode-key "'r'" ["rectangle-toggle"])
+        (bind-copy-mode-key "'y'" ["copy-pipe-and-cancel" (quote "xclip -i -sel p -f | xclip -i -sel c") ])
+      ])
 
       # move x clipboard into tmux paste buffer
       # move tmux copy buffer into x clipboard
-      ''bind C-y run "tmux save-buffer - | xclip -i"''
+      (bind-key "C-y" "run" { args = [(quote "tmux save-buffer - | xclip -i")]; })
+
+      # Smart pane switching with awareness of vim splits
+      (let
+        is_vim = "is_vim";
+        bind-direction = key: dir:
+          bind-key key "if-shell" {
+            table = "root";
+            args = [ ''"$$${is_vim}" "send-keys ${key}" "select-pane -${dir}"''];
+          };
+      in
+      [ ''
+        ${is_vim}='echo "#{pane_current_command}" | grep -iqE "(^|\/)g?(view|n?vim?)(diff)?$"'
+        ''
+        (bind-direction "C-j" "D")
+        (bind-direction "C-k" "U")
+        (bind-direction "C-h" "L")
+        (bind-direction "C-l" "l")
+      ])
+
+      # Restoring Clear Screen (C-l) <<< This is blocking the above
+      (let restore-key = k: bind-key k "send-keys" { args = [("'"+k+"'")]; };
+      in
+      [ (restore-key "C-l")
+        (restore-key "C-k")
+        (restore-key "C-u")
+      ])
+
+      # Start GoTTY in a new window with C-t
+      # bind-key C-t new-window "gotty tmux attach -t `tmux display -p '#S'`"
 
       (compile-block {
         options = expand-with-default-flags "g" {
@@ -161,31 +205,6 @@ with pkgs;
           };
         };
       })
-
-      #### ADDED TO HOME_MANAGER
-      #### # set -g default-terminal "screen-256color"
-
-      ########################################################
-
-      # Smart pane switching with awareness of vim splits
-      ''
-      is_vim='echo "#{pane_current_command}" | grep -iqE "(^|\/)g?(view|n?vim?)(diff)?$"'
-      bind -n C-j if-shell "$is_vim" "send-keys C-j" "select-pane -D"
-      bind -n C-k if-shell "$is_vim" "send-keys C-k" "select-pane -U"
-
-      bind -n C-h if-shell "$is_vim" "send-keys C-h" "select-pane -L"
-      bind -n C-l if-shell "$is_vim" "send-keys C-l" "select-pane -l"
-      ''
-
-      # Restoring Clear Screen (C-l) <<< This is blocking the above
-      ''
-      bind C-l send-keys 'C-l'
-      bind C-k send-keys 'C-k'
-      bind C-u send-keys 'C-u'
-      ''
-
-      # Start GoTTY in a new window with C-t
-      # bind-key C-t new-window "gotty tmux attach -t `tmux display -p '#S'`"
     ];
   };
 }

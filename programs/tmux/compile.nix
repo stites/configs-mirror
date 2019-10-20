@@ -85,7 +85,7 @@ rec {
        };
     in lib.optionalAttrs isValid setting;
 
-  compile-attrs = attrset: assert isAttrs attrset; # && length (getKeys attrset) > 0;
+  compile-attrs = attrset: assert isAttrs attrset;
     let
       prepQueue = p: as: mapAttrsToList (k: v: {
         key = if p == "" then k else p + "-" + k;
