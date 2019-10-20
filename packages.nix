@@ -124,7 +124,7 @@ let
       nix-bash-completions
       nix-info
       nix-index
-      (exe haskellPackages.stack2nix)
+      # (exe haskellPackages.stack2nix)
       (exe haskellPackages.cabal2nix)
       # (exe haskellPackages.stack2cabal)
 
