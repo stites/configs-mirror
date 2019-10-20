@@ -25,7 +25,23 @@ with keybindings.lib;
   # ]);
   ];
   coc-settings = {
+    # always , the default mode, which triggers completion on a letter inserted or triggerCharacters (or trigger pattern match) defined by the current activated sources.
+    # trigger, only trigger completion when you type triggerCharacters (or trigger pattern match) defined by the completion sources.
+    # none   , disable auto trigger completion, you will have to trigger the completion manually.
+    "suggest.autoTrigger" = "always";
+    # To support completion trigger on insert enter, add
+    "suggest.triggerAfterInsertEnter" = true;
+    # To change the completion timeout, use:
     "suggest.timeout" = 500;
+    # # To make the completion automatically select the first completed item, use:
+    # "suggest.noselect" = false;
+    # To make the completion trigger with two input characters, use:
+    "suggest.minTriggerInputLength"= 2;
+    # To enable the commit characters feature, use:
+    "suggest.acceptSuggestionOnCommitCharacter"= true;
+    # To change the indicator of snippet items, use:
+    "suggest.snippetIndicator"= "►";
+    # To get the full list checkout the help by :h coc-configuration in your vim.
   };
   extraConfig = [
     # if hidden is not set, TextEdit might fail.
@@ -46,22 +62,23 @@ with keybindings.lib;
     # always show signcolumns
     "set signcolumn=yes"
 
+    # SEE COC-SNIPPETS INSTEAD
     # Use tab for trigger completion with characters ahead and navigate.
     # Use command ':verbose imap <tab>' to make sure tab is not mapped by other plugin.
     ''
+    function! s:check_back_space() abort
+      let col = col('.') - 1
+      return !col || getline('.')[col - 1]  =~# '\s'
+    endfunction
+
     inoremap <silent><expr> <TAB>
           \ pumvisible() ? "\<C-n>" :
           \ <SID>check_back_space() ? "\<TAB>" :
           \ coc#refresh()
     inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-
-    function! s:check_back_space() abort
-      let col = col('.') - 1
-      return !col || getline('.')[col - 1]  =~# '\s'
-    endfunction
     ''
 
-    # Use <c-space> to trigger completion.
+    # Use <c-space> to trigger completion
     "inoremap <silent><expr> <c-space> coc#refresh()"
 
     # Use <cr> to confirm completion, `<C-g>u` means break undo chain at current position.
@@ -119,12 +136,12 @@ with keybindings.lib;
     # Fix autofix problem of current line
     "nmap ${leader}qf  <Plug>(coc-fix-current)"
 
-    # Use <tab> for select selections ranges, needs server support, like: coc-tsserver, coc-python
-    ''
-    nmap <silent> <TAB> <Plug>(coc-range-select)
-    xmap <silent> <TAB> <Plug>(coc-range-select)
-    xmap <silent> <S-TAB> <Plug>(coc-range-select-backword)
-    ''
+    # # Use <tab> for select selections ranges, needs server support, like: coc-tsserver, coc-python
+    # ''
+    # nmap <silent> <TAB> <Plug>(coc-range-select)
+    # xmap <silent> <TAB> <Plug>(coc-range-select)
+    # xmap <silent> <S-TAB> <Plug>(coc-range-select-backword)
+    # ''
 
     # Use `:Format` to format current buffer
     "command! -nargs=0 Format :call CocAction('format')"

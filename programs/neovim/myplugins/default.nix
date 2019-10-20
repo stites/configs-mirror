@@ -37,10 +37,10 @@ let
     ./rainbow.nix
   ];
 
-  coc-plugins = let usetabnine = true; in [
+  coc-plugins = let usetabnine = false; in [
     ./coc
-    ./coc/highlight.nix
-    ./coc/lists.nix
+    # ./coc/highlight.nix
+    # ./coc/lists.nix
     ./coc/yank.nix
     ./coc/json.nix
     ./coc/snippets.nix

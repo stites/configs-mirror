@@ -13,7 +13,24 @@ in
       "nvim/init.vim".text = ''
         set shell=/bin/sh
       '';
+      "nvim/UltiSnips/awk.snippets".source = ./UltiSnips/awk.snippets;
+      "nvim/UltiSnips/c.snippets".source = ./UltiSnips/c.snippets;
+      "nvim/UltiSnips/cmake.snippets".source = ./UltiSnips/cmake.snippets;
+      "nvim/UltiSnips/cpp.snippets".source = ./UltiSnips/cpp.snippets;
+      "nvim/UltiSnips/css.snippets".source = ./UltiSnips/css.snippets;
+      "nvim/UltiSnips/cuda.snippets".source = ./UltiSnips/cuda.snippets;
+      "nvim/UltiSnips/html.snippets".source = ./UltiSnips/html.snippets;
+      "nvim/UltiSnips/julia.snippets".source = ./UltiSnips/julia.snippets;
+      "nvim/UltiSnips/ledger.snippets".source = ./UltiSnips/ledger.snippets;
+      "nvim/UltiSnips/make.snippets".source = ./UltiSnips/make.snippets;
+      "nvim/UltiSnips/markdown.snippets".source = ./UltiSnips/markdown.snippets;
+      "nvim/UltiSnips/purescript.snippets".source = ./UltiSnips/purescript.snippets;
       "nvim/UltiSnips/python.snippets".source = ./UltiSnips/python.snippets;
+      "nvim/UltiSnips/r.snippets".source = ./UltiSnips/r.snippets;
+      "nvim/UltiSnips/rust.snippets".source = ./UltiSnips/rust.snippets;
+      "nvim/UltiSnips/sh.snippets".source = ./UltiSnips/sh.snippets;
+      "nvim/UltiSnips/tex.snippets".source = ./UltiSnips/tex.snippets;
+      "nvim/UltiSnips/vim.snippets".source = ./UltiSnips/vim.snippets;
       "nvim/UltiSnips/haskell.snippets" = {
         text = lib.strings.concatStringsSep "\n" [
           (builtins.readFile ./UltiSnips/haskell.snippets)
