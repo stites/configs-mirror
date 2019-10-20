@@ -60,6 +60,41 @@ in
         sha256 = "0zvxmixkl1fk4jxvwmy13gmjgvj3q2990hyi5r3bih4ay3pg87mb";
         meta = {};
       })
+      (buildFirefoxXpiAddon { pname = "perma-cc"; version = "1.0.0"; addonId = "firefox@perma.cc";
+        url = "https://addons.mozilla.org/firefox/downloads/file/503425/permacc-1.0.0-fx+an.xpi";
+        sha256 = "0zvxmixkl1fk4jxvwmy13gmjgvj3q2990hyi5r3bih4ay3pg87mb";
+        meta = {};
+      })
+      (buildFirefoxXpiAddon { pname="arxiv-utils"; version="1.4"; addonId="ab779d78-7270-4ee8-9ee8-369d73508298";
+        url = "https://addons.mozilla.org/firefox/downloads/file/3398798/arxiv_utils-1.4-an+fx.xpi";
+        sha256 = "13nlqbh7bpl3j22rhfbjhdrj055b8slv6xzacy5wi6y165fndn8f";
+        meta = {};
+      })
+      (buildFirefoxXpiAddon { pname="Stackgo"; version="1.4"; addonId="bf16104d-6d4f-43d0-98ef-f7793e568b24";
+        url = "https://addons.mozilla.org/firefox/downloads/file/669788/stackgo-1.4-an+fx.xpi";
+        sha256 = "128yhgz8q0rrzdn5d4irci00wvg4g2g9diy95gwrblwh299qxy73";
+        meta = {};
+      })
+      (buildFirefoxXpiAddon { pname="py3redirect"; version="1.1.1"; addonId="c5a7894b-e3b0-457e-aa15-e1eb2b00d7a2";
+        url = "https://addons.mozilla.org/firefox/downloads/file/564156/py3redirect-1.1.1-an+fx.xpi";
+        sha256 = "1ghjrhh8mwv99yb23zgxsvn7xbdgi5rcaf8i5rg0sqj4f9bx4swm";
+        meta = {};
+      })
+      (buildFirefoxXpiAddon { pname="arxiv-url"; version="0.1"; addonId="e5849ea4-ac8c-4a75-896b-b2578970f1c0";
+        url = "https://addons.mozilla.org/firefox/downloads/file/886406/arxiv_url-0.1-an+fx.xpi";
+        sha256 = "1n89kxmljq8jfll5j9nmb1lssf9avsm832ivd10lfakv262yl3am";
+        meta = {};
+      })
+      (buildFirefoxXpiAddon { pname="Arxiv-Vanity"; version="0.1"; addonId="e92bf629-488c-4d5f-8771-04812b17c143";
+        url = "https://addons.mozilla.org/firefox/downloads/file/3362708/arxiv_vanity-0.1-fx.xpi";
+        sha256 = "0ln0bpq9khkhi7rai4cdrgha670w07brh1f78i9r8c6s0w6lla64";
+        meta = {};
+      })
+      (buildFirefoxXpiAddon { pname="Enhancer-for-YouTube"; version="2.0.98.2"; addonId="enhancerforyoutube@maximerf.addons.mozilla.org";
+        url = "https://addons.mozilla.org/firefox/downloads/file/3395753/enhancer_for_youtubetm-2.0.98.2-fx.xpi";
+        sha256 = "1lqlzsq8hcg96930g5pniqmm820876ys3pfzhf2lbxln2hn6b1qw";
+        meta = {};
+      })
       auto-tab-discard
       https-everywhere
       privacy-badger
