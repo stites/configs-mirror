@@ -82,6 +82,7 @@ main = do
           spawnOn "2" "kitty -1"
           spawnOn "3" "zotero"
           spawnOn "3" "protonmail-bridge"
+          spawnOn "3" "thunderbird"
       } `EZ.removeKeysP` removeKeys'
         `EZ.additionalKeysP` additionalKeys'
   where
