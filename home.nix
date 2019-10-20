@@ -141,7 +141,8 @@ in
     ./programs/broot.nix
     ./programs/termonad
     (import ./programs/rofi.nix { inherit termcommand; })
-    ./programs/tmux.nix
+    ./programs/tmux
+    ./programs/tmux/tmuxifier.nix
     ./programs/gtk.nix
     ./programs/git.nix
     ./programs/fzf.nix
@@ -149,7 +150,6 @@ in
     ./programs/autorandr.nix
     ./programs/xscreensaver.nix
     ./programs/python
-    ./programs/tmuxifier.nix
     ./programs/haskline.nix
     ./programs/ghci.nix
     ./programs/codex.nix

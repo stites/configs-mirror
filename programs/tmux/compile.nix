@@ -1,103 +1,47 @@
 { pkgs, lib, ... }:
 
 with builtins; with lib.strings; with lib.attrsets; with lib.lists;
+
 rec {
   compile = stuff:
-    let go = s: if builtins.isString s then s else generic-args s;
+    let go = s: if builtins.isString s then s else compile-block s;
     in concatStringsSep "\n" (map go (lib.lists.flatten stuff));
 
-  unified-compile = stuff:
-    let go = s: if builtins.isString s then s else unified-compile-one s;
-    in concatStringsSep "\n" (map go (lib.lists.flatten stuff));
+  quote = s: assert builtins.isString s; "\"${s}\"";
 
-  generic-args = {
-    prefix ? "",
-    suffix ? "",
-    flags ? null,
-    cmd,
-    kwargs ? {}}:
-      let _flags = lib.optionalString (flags != null) "-${flags}";
-          _cmd = "${prefix}${cmd}${suffix}";
-          _pairs = parse-kwargs kwargs;
-      in lib.strings.concatStringsSep "\n" (map (kv: "${_cmd} ${_flags} ${kv}") _pairs);
-
-  parse-kwargs = kwargs: with builtins; with lib.attrsets; with lib.lists;
+  # =======================================================================#
+  # Begin
+  # =======================================================================#
+  expand-with-default-flags = dflags: attrset: assert isAttrs attrset;
     let
-      eleAsString = v:
-        if isString v
-        then v
-        else if isBool v
-          then (if v then "on" else "off")
-          else if v == null then "none"
-            else toString v;
-      eles   = filterAttrs (k: v: !(isStyles k v)) kwargs;
-      styles = if hasAttr "styles" kwargs then getAttr "styles" kwargs else {};
+      expandableKV = k: v:
+        (k != "style" && k != "set" && k != "flags")
+        && (isString v || isBool v || v == null);
 
-      styleAsString = style: kv: "${style}-style ${smoosh-styles kv}";
-      smoosh-styles = kv: concatStringsSep ","
-        (  lib.optionals (hasAttr "fg" kv) ["fg=${kv.fg}"]
-        ++ lib.optionals (hasAttr "bg" kv) ["bg=${kv.bg}"]
-        ++ lib.optionals (hasAttr "attrs" kv && isList kv.attrs) kv.attrs);
-
-    in mapAttrsToList (k: v: "${k} ${eleAsString v}") eles
-      ++ mapAttrsToList styleAsString styles;
-
-  isStyles = k: v: k == "styles" && isAttrs v;
-  notStyles = k: v: !(isStyles k v);
-  getStyles = kv: if hasAttr "styles" kv then getAttr "styles" kv else {};
-  # generating arguments for generic-args
-  quote  = s: assert builtins.isString s; "\"${s}\"";
-  set    = kwargs: {cmd="set"; inherit kwargs;};
-  setw   = kwargs: (set kwargs) // {flags="w";};
-  set-g  = kwargs: (set kwargs) // {flags="g";};
-  setw-g = kwargs: (set kwargs) // {flags="gw";};
-  set-styles = style: attrs:
-    let askwargs = k: v: {cmd="set"; flags="g"; kwargs={"${style}-style"="${k}=${v}";};};
-    in mapAttrsToList askwargs attrs;
-  setw-styles = style: attrs: map (set: set // {suffix = "w";}) (set-styles style attrs);
-
-  options = kwargs: flags: set kwargs // flags; # set is an alias to set-option
-  window-options = kwargs: flags:
-    let xs = setw kwargs;
-    in xs // (xs.flags + flags.flags); # set is an alias to set-option
-
-  with-default-flags = dflags: attrset: assert isAttrs attrset;
-    let
       mergeFlags = flags:
         concatStringsSep "" (unique (stringToCharacters flags ++ stringToCharacters dflags));
 
-      go = attrset: memo: path: val:
-        let
-          curkey = last path;
-          flagsibling = init path ++ ["flags"];
-          flagchild = path ++ ["flags"];
-          noFlag = nodetype: fpath: curkey == nodetype && !(hasAttrByPath fpath attrset);
-          updateMemo = {
-            inherit (memo) additional;
-            updated = recursiveUpdate memo.updated (setAttrByPath path (mergeFlags val)); # update flags
-          };
-          flagAdditionalUpdate = fpath: {
-            updated = memo.updated // setAttrByPath path val;
-            additional = memo.additional // setAttrByPath fpath dflags; # signal flag to be added
-          };
-        in if "flags" == curkey
-          then updateMemo
-          else if noFlag "set" flagsibling # 'set' path with no flags
-            then flagAdditionalUpdate flagsibling
-            else if noFlag "style" flagchild
-              then flagAdditionalUpdate flagchild
-              else if isAttrs val
-                then memo # do nothing until we make it to a leaf
-                else updateMemo;
-      result = recursive-update go {updated = {}; additional={};} attrset;
-    in
-      # result;
-      recursiveUpdate result.updated result.additional;
+      addFlagsTo = p:
+        p // { flags = if hasAttr "flags" p then mergeFlags p.flags else dflags; };
 
-  recursive-update = f: memo: attrset: assert isAttrs attrset;
+      expandWithFlags = p:
+        mapAttrs (k: v: if expandableKV k v then {set=v; flags=dflags;} else v) p;
+
+      updateParent = path: p:
+        if !isAttrs p then addFlagsTo { set = p; }
+        else if last path == "style" then addFlagsTo p
+        else if hasAttr "set" p then addFlagsTo (expandWithFlags p)
+        else expandWithFlags p;
+
+      go = attrset: memo: path: node:
+        recursiveUpdate memo (setAttrByPath path (updateParent path node));
+    in
+      recurse-on-nodes go {} attrset;
+
+  recurse-on-nodes = f: memo: attrset: assert isAttrs attrset;
     let
       prepQueue = ps: as: mapAttrsToList (k: v: { path = ps ++ [k]; val = v; }) as;
-      getChildren = ps: curr: prepQueue ps (filterAttrs (k: v: isAttrs v) curr);
+      getChildren = ps: curr: lib.optionals (isAttrs curr) (prepQueue ps (filterAttrs (k: v: isAttrs v) curr));
       recurse = memo: queue:
         let
           curr = head queue;
@@ -107,8 +51,9 @@ rec {
           then memo
           else recurse (f attrset memo curr.path curr.val) (rest ++ getChildren curr.path curr.val);
     in recurse memo (prepQueue [] attrset);
+    # in (prepQueue [] attrset);
 
-  _v2str = v:
+  val2str = v:
     if isString v
       then v
       else if isBool v
@@ -116,9 +61,9 @@ rec {
         else if v == null then "none"
           else toString v;
 
-
-
   compileone = k: v:
+    # error: most likely used "styles" instead of "style"
+    assert !(hasSuffix "bg" k || hasSuffix "fg" k);
     # this is where the compile rules are made
     let
       isValid = hasSuffix "-style" k || hasAttr "set" v;
@@ -132,13 +77,15 @@ rec {
           ( if hasSuffix "-style" k
             then { set = smoosh-styles v; }
             else if hasAttr "set" v
-              then { inherit (v) set; }
-              else {}
+              then { set = val2str v.set; }
+              else if isBool v || isString v || v == null
+                then { set = val2str v; }
+                else {}
           ) // optionalAttrs (hasAttr "flags" v) { flags = v.flags; };
        };
     in lib.optionalAttrs isValid setting;
 
-  compileit = attrset: assert isAttrs attrset; # && length (getKeys attrset) > 0;
+  compile-attrs = attrset: assert isAttrs attrset; # && length (getKeys attrset) > 0;
     let
       prepQueue = p: as: mapAttrsToList (k: v: {
         key = if p == "" then k else p + "-" + k;
@@ -155,125 +102,113 @@ rec {
           if length queue == 0
           then memo
           else recurse (memo // compileone curr.key curr.val) (rest ++ getChildren curr.key curr.val);
-    in recurse {} (prepQueue "" attrset);
+   in recurse {} (prepQueue "" attrset);
 
-  # unified-one-tl = cmd: k: v:
-  #   let
-  #     kv2str = k: v: k + (_v2str (if isAttrs v && hasAttr "set" v then v.set else v));
-  #     getFlag = v: if isAttrs v && hasAttr "flags" v then v.flags else null;
-  #   in lib.optional (if isAttrs v && hasAttr "set" v) [{ inherit cmd; flags = getFlag v; args = kv2str k v; }];
-
-  # unified-compile-one = { cmd, flags ? "", args ? "" }:
-  #   assert isString flags || flags == null;
-  #   let _flags = lib.optionalString (isString flags && flags != "") "-${flags}";
-  #   in "${cmd} ${_flags} ${args}";
-
-  # parse-unified-kwargs = kwargs:
-  #   let
-  #     eleAsString = v:
-  #       if isString v
-  #         then v
-  #         else if isBool v
-  #           then (if v then "on" else "off")
-  #           else if v == null then "none"
-  #             else toString v;
-
-  #     styleAsString = style: kv: "${style}-style ${smoosh-styles kv}";
-  #     smoosh-styles = kv: concatStringsSep ","
-  #       (  lib.optionals (hasAttr "fg" kv) ["fg=${kv.fg}"]
-  #       ++ lib.optionals (hasAttr "bg" kv) ["bg=${kv.bg}"]
-  #       ++ lib.optionals (hasAttr "attrs" kv && isList kv.attrs) kv.attrs);
-
-  #   in mapAttrsToList (k: v: "${k} ${eleAsString v}") (filterAttrs notStyles kwargs)
-  #     ++ mapAttrsToList styleAsString (getStyles kwargs);
-
-  te1 = head (compileit te11);
-  te11 = {
-      window-status-current-format = {
-        set = quote "#[bg=brightmagenta]#[fg=colour8] #I #[fg=colour8]#[bg=colour14] #W ";
-        flags = "xg"; # wgg
-      };
-    };
-
-  te2 = head (compileit te21);
-  te21 = {
-    window-status-current = {
-      style = {bg="colour0";fg="colour11";attrs=["dim"];};
-    };
-  };
-  te3 = head (compileit te31);
-  te31 = {
-    window-status-current = {
-      format = {
-        set = quote "#[bg=brightmagenta]#[fg=colour8] #I #[fg=colour8]#[bg=colour14] #W ";
-        extra-flags = "xg"; # wgg
-      };
-    };
-  };
-  te4 = compileit te41;
-  te41 = with-default-flags "q" {
-    window-status-current = {
-      set = quote "#[bg=brightmagenta]#[fg=colour8] #I #[fg=colour8]#[bg=colour14] #W ";
-      flags = "xg"; # wgg
-
-      format = {
-        set = quote "#[bg=brightmagenta]#[fg=colour8] #I #[fg=colour8]#[bg=colour14] #W ";
-        flags = "xg"; # wgg
-      };
-      style = {bg="colour0";fg="colour11";attrs=["dim"];};
-    };
-  };
-
-  unified = { options ? null, window-options ? null}:
+  compile-commands = cmd: {flags ? ""}: attrs: assert flags != null;
     let
-        mkOptions = mapAttrsToList compileit;
-        # mkWOptions = woptset: mkOptions (with-default-flags "w" woptset);
+      go = k: v: assert hasAttr "set" v && hasAttr "flags" v;
+        let _flags = lib.optionalString (v.flags != "") " -${v.flags}";
+        in "${cmd}${_flags} ${k} ${v.set}";
 
-    in lib.optionals (options != null) options
-    # ++ lib.optionals (window-options != null) (mkWOptions window-options)
+    in mapAttrsToList go (expand-with-default-flags flags (compile-attrs attrs));
+
+  compile-block = { options ? null, window-options ? null}:
+    let
+        mkOptions = compile-commands "set" {};
+        mkWOptions = compile-commands "set" {flags="w";};
+    in lib.optionals (options != null) (mkOptions options)
+    ++ lib.optionals (window-options != null) (mkWOptions window-options)
     ;
-  testy = with-default-flags "g" {
-        # options = {
-          terminal-overrides = {
-            set = ''"xterm*:XT:smcup@:rmcup@"'';
-            flags = "g";
-          };
-        #   set-titles-string=''"#T"'';
-        };
 
-  test = (unified {
-        options = with-default-flags "g" {
-        # options = {
-          terminal-overrides = {
-            set = ''"xterm*:XT:smcup@:rmcup@"'';
-            flags = "g";
-          };
-        #   set-titles-string=''"#T"'';
-        #   # Fixes for ssh-agent
-        #   update-environment=''"SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION"'';
-        #   mouse=true; # Enable mouse mode (tmux 2.1 and above)
-        #   allow-rename=false;    # Stop renaming windows automatically
-        #   renumber-windows=true; # But reorder windows automatically
+  tests = rec {
+    te1 = compile-attrs {
+        window-status-current-format = {
+          set = quote "#[bg=brightmagenta]#[fg=colour8] #I #[fg=colour8]#[bg=colour14] #W ";
+          flags = "xg"; # wgg
         };
-        window-options = with-default-flags "" {
-          # window-status-format=''" #F#I:#W#F "'';
-          # window-status-current-format=''" #F#I:#W#F "'';
-          # window-status-format = {
-          #   set = ''"#[fg=magenta]#[bg=black] #I #[bg=cyan]#[fg=colour8] #W "'';
-          #   flags = "g"; #wg
-          # };
-          # window-status-current = {
-          #   style = {bg="colour0";fg="colour11";attrs=["dim"];};
-          # };
-          window-status-current-format = {
-            set = quote "#[bg=brightmagenta]#[fg=colour8] #I #[fg=colour8]#[bg=colour14] #W ";
-            extra-flags = "xg"; # wgg
-          };
-          # styles = {
-          #   window-status = {bg="green";fg="black";attrs=["reverse"];};
-            # window-status-current = ;
-          # };
+      };
+
+    te2 = compile-attrs {
+      window-status-current = {
+        style = {bg="colour0";fg="colour11";attrs=["dim"];};
+      };
+    };
+    te3 = compile-attrs {
+      window-status-current = {
+        format = {
+          set = quote "#[bg=brightmagenta]#[fg=colour8] #I #[fg=colour8]#[bg=colour14] #W ";
+          extra-flags = "xg"; # wgg
         };
-      });
+      };
+    };
+
+    te4 = compile-attrs te4-1;
+
+    te4-1 = expand-with-default-flags "q" te4-base;
+
+    te4-base = {
+      window-status-current = {
+        set = true;
+        flags = "xg"; # modify
+
+        format = { set = "add flag q"; flags = "xg"; };
+        mode = { set = null; };
+        dangling = { donothing = ""; };
+        style = {bg="colour0";fg="colour11";attrs=["dim"];};
+        titles-string=''"#T"'';
+      };
+    };
+
+    te5 = compile-commands "set" {flags="";} (expand-with-default-flags "g" te4-base);
+    te6 = compile-commands "set" {flags="";} (expand-with-default-flags "g" te6-base);
+    te6-1 = (expand-with-default-flags "g" te6-base);
+    te6-base = {
+      terminal-overrides = {
+        set = ''"xterm*:XT:smcup@:rmcup@"'';
+        flags = "g";
+      };
+      set-titles-string=''"#T"'';
+      # Fixes for ssh-agent
+      update-environment=''"SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION"'';
+      mouse=true; # Enable mouse mode (tmux 2.1 and above)
+      allow-rename=false;    # Stop renaming windows automatically
+      renumber-windows=true; # But reorder windows automatically
+    };
+
+    lengths = [ (length test) 10 ];
+    test = compile-block {
+      options = expand-with-default-flags "g" {
+        a = { set = true; flags = "w"; }; # "set -wg a on"
+        b = quote "typechecks"; # "set -g b \"typechecks\""
+        c = "unquoted"; # "set -g c unquoted"
+        d = true; # "set -g d on"
+        e = 20; # "set -g e 20"
+        f = null; # "set -g f none"
+      };
+      window-options = expand-with-default-flags "g" {
+        nest = {
+          style = { bg="a";fg="b";attrs=["c"]; }; # "set -gw nest-style fg=b,bg=a,c"
+          checks = 20; # "set -gw nest-checks 20"
+          current = {
+            style = {bg="0";fg="1"; flags = "q";}; # "set -qgw nest-current-style fg=1,bg=0"
+            format = { set = quote "stuff"; flags = "xg"; }; # "set -xgw nest-current-format \"stuff\""
+          };
+        };
+      };
+    };
+
+    window-options = expand-with-default-flags "g" {
+        window-status = {
+          styles = { bg="green";fg="black";attrs=["reverse"]; };
+          format = ''"#[fg=magenta]#[bg=black] #I #[bg=cyan]#[fg=colour8] #W "'';
+          current = {
+            # "set -gw window-status-current-style fg=colour11,bg=colour0,dim"
+            style = {bg="colour0";fg="colour11";attrs=["dim"];};
+            # "set -xgq window-status-current-format \"stuff\""
+            format = { set = quote "stuff"; flags = "xg"; };
+          };
+        };
+      };
+  };
 }
 
