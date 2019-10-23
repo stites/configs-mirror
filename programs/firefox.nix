@@ -13,34 +13,34 @@ in
     enableGoogleTalk = true;
     enableIcedTea = true;
     package = pkgs.firefox-devedition;
-    firefox.profiles."stites" = {
-      id = 0;
-      isDefault = true;
-      extraConfig = ""; # Extra preferences to add to user.js.
-      settings = {
-        # Attribute set of Firefox preferences.
-        "browser.newtabpage.enabled" = false;            # newtabs as blank pages
-        "browser.urlbar.placeholderName" = "DuckDuckGo"; # use ddg
-        "privacy.donottrackheader.enabled" = true;       # set "Do Not Track" to always
-        "app.shield.optoutstudies.enabled" = false;      # opt out of studies
-      };
-      userChrome = pkgs.strings.concatStringsSep "\n" [
-        # Custom Firefox CSS.
-        ''
-        /* Hide tab bar in FF Quantum */
-        @-moz-document url("chrome://browser/content/browser.xul") {
-          #TabsToolbar {
-            visibility: collapse !important;
-            margin-bottom: 21px !important;
-          }
+    #profiles."stites" = {
+    #  id = 0;
+    #  isDefault = true;
+    #  extraConfig = ""; # Extra preferences to add to user.js.
+    #  settings = {
+    #    # Attribute set of Firefox preferences.
+    #    "browser.newtabpage.enabled" = false;            # newtabs as blank pages
+    #    "browser.urlbar.placeholderName" = "DuckDuckGo"; # use ddg
+    #    "privacy.donottrackheader.enabled" = true;       # set "Do Not Track" to always
+    #    "app.shield.optoutstudies.enabled" = false;      # opt out of studies
+    #  };
+    #  userChrome = pkgs.lib.strings.concatStringsSep "\n" [
+    #    # Custom Firefox CSS.
+    #    ''
+    #    /* Hide tab bar in FF Quantum */
+    #    @-moz-document url("chrome://browser/content/browser.xul") {
+    #      #TabsToolbar {
+    #        visibility: collapse !important;
+    #        margin-bottom: 21px !important;
+    #      }
 
-          #sidebar-box[sidebarcommand="treestyletab_piro_sakura_ne_jp-sidebar-action"] #sidebar-header {
-            visibility: collapse !important;
-          }
-        }
-        ''
-      ];
-    };
+    #      #sidebar-box[sidebarcommand="treestyletab_piro_sakura_ne_jp-sidebar-action"] #sidebar-header {
+    #        visibility: collapse !important;
+    #      }
+    #    }
+    #    ''
+    #  ];
+    #};
     extensions = with pkgs.nur.repos.rycee.firefox-addons; [
       (buildFirefoxXpiAddon { pname = "basic-json-formatter"; version = "1.1.0"; addonId = "{c7632bd5-48ce-467d-9433-58f33477553d}";
         url = "https://addons.mozilla.org/firefox/downloads/file/2846352/basic_json_formatter-1.1.0-an+fx.xpi=";
