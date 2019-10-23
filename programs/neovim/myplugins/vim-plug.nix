@@ -17,8 +17,10 @@ in
     # - Avoid using standard Vim directory names like 'plugin'
     "call plug#begin('${builtins.getEnv "HOME"}/.config/nvim/plugged')"
     "Plug 'wakatime/vim-wakatime'"
+    "Plug 'neovimhaskell/nvim-hs.vim'"
     "call plug#end()"
     "let g:wakatime_PythonBinary = '${notPython}'"
+    "let g:nvimhsPluginStarter=nvimhs#stack#pluginstarter()"
   ];
 }
 

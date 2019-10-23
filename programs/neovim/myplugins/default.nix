@@ -11,10 +11,8 @@ let
     ./vim-sandwich.nix
     ./vim-commentary.nix
     ./vim-eunuch.nix
-    ./vim-plug.nix # used instead of vim-wakatime.nix
-    # ./vim-wakatime.nix
-    ./nvim-hs-vim.nix
   ] ++ tmux-plugins
+    ++ vim-plug-plugins
     ++ txt-plugins
     ++ layout-plugins
     ++ coc-plugins
@@ -25,6 +23,11 @@ let
     ./tslime.nix
   ];
 
+  vim-plug-plugins = [
+    ./vim-plug.nix # used instead of vim-wakatime.nix
+    # ./vim-wakatime.nix
+    # ./nvim-hs-vim.nix
+  ];
   txt-plugins = [
     ./goyo-vim.nix
     ./vim-textobj-sentence.nix
