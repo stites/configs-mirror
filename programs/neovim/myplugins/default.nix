@@ -1,3 +1,4 @@
+# { python }:
 { lib, pkgs, ... }:
 let
   validPluginFiles = (pkgs.callPackage ../plugin/functions.nix {}).validPluginFiles;
@@ -10,8 +11,9 @@ let
     ./vim-sandwich.nix
     ./vim-commentary.nix
     ./vim-eunuch.nix
-    ./vim-plug.nix
+    ./vim-plug.nix # used instead of vim-wakatime.nix
     # ./vim-wakatime.nix
+    ./nvim-hs-vim.nix
   ] ++ tmux-plugins
     ++ txt-plugins
     ++ layout-plugins
@@ -48,6 +50,8 @@ let
   ] ++ (if usetabnine then [./coc/tabnine.nix] else [
     # ./neco.nix
     # ./html.nix
+    # (./coc/python.nix python)
+    ./coc/haskell.nix
     ./coc/python.nix
     ./coc/vimtex.nix
   ]);
@@ -55,20 +59,27 @@ let
 in
 
 assert validPluginFiles plugins;
+with lib.attrsets; with lib.strings; with lib.lists;
 let
   ps = compileAll plugins;
+  inherit (pkgs) callPackage;
+  flipCallPackage = p: callPackage p {};
 in rec {
-  plugins = map (p: p.pkg) ps;
-  extraConfig = lib.strings.concatStringsSep "\n" (map (p: p.extraConfig) ps);
-  coc1 = (map (p: pkgs.callPackage p {}) coc-plugins);
-  coc2 = map (p: lib.attrsets.optionalAttrs (p ? coc-settings) p.coc-settings)
-          (map (p: pkgs.callPackage p {}) coc-plugins);
+  plugins = filter (p: p != null) (map (p: p.pkg) ps);
+  extraConfig = concatStringsSep "\n" (map (p: p.extraConfig) ps);
+
+  # coc1 = (map flipCallPackage coc-plugins);
+
+  # coc2 = map (p: optionalAttrs (p ? coc-settings) p.coc-settings)
+  #         (map flipCallPackage coc-plugins);
 
   coc-settings = let
       allsettings =
-        map (p: lib.attrsets.optionalAttrs (p ? coc-settings) p.coc-settings)
-          (map (p: pkgs.callPackage p {}) coc-plugins);
+        map (p: optionalAttrs (p ? coc-settings) p.coc-settings)
+          (map flipCallPackage coc-plugins);
     in
-      lib.attrsets.foldAttrs (new: memo: assert memo == null || memo == new; new) null allsettings;
+      foldAttrs (new: memo: assert memo == null || memo == new; new) null allsettings;
+
+  home.packages = lib.lists.flatten (map (p: lib.optionals (hasAttrByPath ["home" "packages"] p) p.home.packages) ps);
 }
 

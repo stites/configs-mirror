@@ -10,16 +10,17 @@ let
   hasDeps = p: hasAttr "dependencies" p;
 
   compile = depth: p:
-    assert p ? pkg ; # && (p ? description || p ? pkg.meta.description);
-    assert p ? name || p ? pkg.name;
+    # assert p ? pkg; # && (p ? description || p ? pkg.meta.description);
+    assert hasAttr "name" p || (hasAttr "pkg" p);
     assert !(p ? extraConfig) || (isString p.extraConfig || (listOf string).check p.extraConfig);
     assert !(p ? extraConfigs); # make sure there isn't an extraConfigs, plural
-    optionalAttrs (!(hasAttr "disable" p) || !p.disable) {
+    let
+      name = if hasAttr "name" p then p.name else p.pkg.name;
+    in optionalAttrs (!(hasAttr "disable" p) || !p.disable) {
       # "${if p ? name then p.name else p.pkg.name}" = {
-      "${if p ? name then p.name else p.pkg.name}" = {
-        name = "${if p ? name then p.name else p.pkg.name}";
-        inherit (p) pkg;
-        inherit depth;
+      "${name}" = {
+        pkg = if hasAttr "pkg" p then p.pkg else null;
+        inherit depth name;
         priority = if p ? priority then p.priority else (-1);
         extraConfig = optionalString (p ? extraConfig)
           (if isString p.extraConfig then p.extraConfig else concatStringsSep "\n" p.extraConfig);
@@ -29,11 +30,11 @@ let
     };
 
   mergeplugs = new: memo:
-    assert hasAttr "pkg" new;
     assert hasAttr "extraConfig" new;
-    assert !(hasAttr "pkg" memo) || (hasAttr "pkg" new && memo.pkg == new.pkg);
+    # making pkg optional
+    assert !(hasAttr "pkg" memo) || (!(hasAttr "pkg" memo) && !(hasAttr "pkg" new)) || (hasAttr "pkg" memo && hasAttr "pkg" new && memo.pkg == new.pkg);
     {
-      inherit (new) pkg;
+      pkg = if !(hasAttr "pkg" memo) && !(hasAttr "pkg" new) then null else new.pkg; # asserts weed out the rest
       extraConfig = if (memo ? extraConfig) then memo.extraConfig + "\n" + new.extraConfig else new.extraConfig;
       priority = let
           new-priority = if new.priority > -1 then new.depth else new.priority;
@@ -45,7 +46,10 @@ let
             then memo.priority
             else new-priority;
       # somehow merge all configs
-      # home = memo.home //
+      # home = recursiveUpdate memo.home new.home; # will overwrite?
+      home =
+        let optionalHome = p: lib.optionals (hasAttr "home" p) [p.home];
+        in zipAttrsWith (name: values: flatten values) (optionalHome memo ++ optionalHome new); # will overly-smoosh?
     };
 
   countAll = count (a: true);

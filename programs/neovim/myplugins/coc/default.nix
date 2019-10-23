@@ -9,6 +9,10 @@ with keybindings.lib;
   pkg = pkgs.vimPlugins.coc-nvim;
   priority = 100;
 
+  home.packages = [
+    pkgs.nodejs pkgs.yarn # for coc.nvim
+  ];
+
   # TODO: need a way to specify reverse dependencies or reorder priorities
   dependencies = [
     # use out-of-the-box airline integration

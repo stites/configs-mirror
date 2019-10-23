@@ -2,9 +2,10 @@
 {
   pkg = pkgs.vimPlugins.coc-python;
   coc-settings = {
-    "python.jediEnabled" = false; # use Microsoft Python Language Server, coc-python will download latest stable MPLS for you.
+    "python.jediEnabled" = true; # use Microsoft Python Language Server, coc-python will download latest stable MPLS for you.
+    # "python.pythonPath" = "${python}/bin/python"; # to Python, you can use a custom version of Python by modifying this setting to include the full path., default: `"python"`
+
     ## Options
-    #
     #- `python.autoComplete.addBrackets`:Automatically add brackets for functions, not work for MPLS., default: `false`
     #- `python.autoComplete.extraPaths`:List of paths to libraries and the like that need to be imported by auto complete engine. E.g. when using Google App SDK, the paths are not in system path, hence need to be added into this list., default: `[]`
     #- `python.autoComplete.showAdvancedMembers`:Controls appearance of methods with double underscores in the completion list., default: `true`
@@ -76,7 +77,6 @@
     #- `python.linting.pylintEnabled`:Whether to lint Python files using pylint., default: `true`
     #- `python.linting.pylintPath`:Path to Pylint, you can use a custom version of pylint by modifying this setting to include the full path., default: `"pylint"`
     #- `python.linting.pylintUseMinimalCheckers`:Whether to run Pylint with minimal set of rules., default: `true`
-    #- `python.pythonPath`:Path to Python, you can use a custom version of Python by modifying this setting to include the full path., default: `"python"`
     #- `python.condaPath`:Path to the conda executable to use for activation (version 4.4+)., default: `""`
     #- `python.pipenvPath`:Path to the pipenv executable to use for activation., default: `"pipenv"`
     #- `python.poetryPath`:Path to the poetry executable., default: `"poetry"`

@@ -89,20 +89,15 @@ in
     };
   };
 
-  home.packages = [ pkgs.nodejs pkgs.yarn ];
+  home.packages = [ ] ++ myplugins.home.packages;
 
   nixpkgs.overlays = [
     (self: super: let
-      pin = pkgs.fetchFromGitHub {
-        owner = "NixOS";
-        repo = "nixpkgs-channels";
-        rev = "3f4144c30a6351dd79b177328ec4dea03e2ce45f";
-        sha256 = "1qg5n60n3fr6cypihnrjw451fadps5pysj5p0vvfb320mpfvlbjb";
-      };
-      unstable = import pin {};
+      unstable = import <unstable> {};
     in {
       neovim = unstable.neovim;
       vimPlugins = unstable.vimPlugins;
+      all-hies = import (fetchTarball "https://github.com/infinisil/all-hies/tarball/master") {};
     })
   ];
 
@@ -436,44 +431,5 @@ in
     # vim-plug automatically executes `filetype plugin indent on` and `syntax enable`.
     # You can revert the settings after the call. (e.g. filetype indent off, syntax off, etc.)
     plugins = myplugins.plugins;
-    # plugins = (with pkgs.vimPlugins; [
-    #   # HLedger
-    #   (pluginBuilder rec { # Plug 'anekos/hledger-vim', { 'for': 'journal' }
-    #     name = "hledger-vim";
-    #     tarball = "${homepage}/archive/master.tar.gz";
-    #     homepage = https://github.com/anekos/hledger-vim;
-    #   })
-    #   # Productivity
-    #   (pluginBuilder rec {
-    #     name = "utl-vim";
-    #     tarball = "${homepage}/archive/master.tar.gz";
-    #     homepage = https://github.com/vim-scripts/utl.vim;
-    #   })
-    #   vim-SyntaxRange
-    #   calendar-vim
-    #   vim-orgmode # 'jceb/vim-orgmode' | Plug 'mattn/calendar-vim' | Plug 'inkarkat/vim-SyntaxRange' | Plug 'vim-scripts/utl.vim'
-
-    #   ##############################################
-    #   # IDE support
-    #   ##############################################
-    #   vim-abolish             # Use with LSP to search for, substitute, and abbreviate multiple variants of a word
-    #   # MIGRATED vim-multiple-cursors    # multicursors
-    #   vim-hier                # highlight errors
-    #   # MIGRATED vim-polyglot            # handle the rest of the languages
-    #   rainbow_parentheses-vim # make parens pretty
-
-    # ] ++ configs.prelude.plugins
-    #   # ++ configs.git.plugins
-    #   # ++ configs.cplusplus.plugins
-    #   # ++ configs.haskell.plugins
-    #   # ++ configs.lsp.plugins
-    #   ++ configs.coc.plugins
-    #   ++ configs.python.plugins
-    #   ++ configs.surround.plugins
-    #   ++ configs.spelling.plugins
-    #   ++ configs.layout.plugins
-    #   ++ configs.textmanipulation.plugins
-    #   ++ configs.tmux.plugins
-    # );
   };
 }
