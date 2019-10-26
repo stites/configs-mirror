@@ -160,6 +160,7 @@ in
     ./programs/matplotlib.nix
     ./programs/brittany.nix
     ./programs/texlive.nix
+    ./programs/kitty
     ./programs/jq.nix
     ./programs/neofetch.nix
     ./programs/pijul.nix
