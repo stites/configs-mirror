@@ -221,6 +221,7 @@ in
         define="${nix-profile}/bin/dictd -d gcide ";
         hside="tmuxifier load-window hs";
         pyide="tmuxifier load-window py";
+        rot13="tr 'A-Za-z' 'N-ZA-Mn-za-m'";
 
         # Add an "alert" alias for long running commands.  Use like so:
         #   sleep 10; alert
