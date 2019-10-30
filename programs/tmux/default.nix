@@ -32,7 +32,7 @@ with pkgs;
     historyLimit = 500000;
     secureSocket = false;
     customPaneNavigationAndResize = true;
-    newSession = true;
+    newSession = false; # interferes with synchronize-panes?
     resizeAmount = 5;
     shortcut = "b";
     terminal = "screen-256color";
@@ -56,13 +56,25 @@ with pkgs;
 
     in with lib.strings; compile [
       # make sure new windows start from older ones
-      (bind-key  "c"   "new-window"   {args = ["-c"      (quote "#{pane_current_path}")];})
-      (bind-key  "%"   "split-window" {args = ["-c" "-h" (quote "#{pane_current_path}")];})
-      (bind-key "'\"'" "split-window" {args = ["-c" "-v" (quote "#{pane_current_path}")];})
+      (let
+        in_pane_path = ["-c \"#{pane_current_path}\""];
+      in [
+        (bind-key  "c"   "new-window"   {args = in_pane_path; })
+        (bind-key  "%"   "split-window" {args = ["-h"] ++ in_pane_path;})
+        (bind-key "'\"'" "split-window" {args = ["-v"] ++ in_pane_path;})
+      ])
 
       # Sync panes
       (bind-key "y" "setw" {args = ["synchronize-panes"];})
 
+      # Mouse support ------------------------------------------------
+      (compile-block {
+        options = expand-with-default-flags "g" {
+          mouse = true;          # Enable mouse mode (tmux 2.1 and above)
+        };
+      })
+
+      # # Vi copypaste
       # ++++++++++++++++++++++++++++ #
       #      use vi copy/paste       #
       # ++++++++++++++++++++++++++++ #
@@ -71,23 +83,50 @@ with pkgs;
       (bind-key "Escape" "copy-mode" {})
       (unbind-key "p")
 
+
       # https://unix.stackexchange.com/questions/67673/copy-paste-text-selections-between-tmux-and-the-clipboard#72340
       # https://unix.stackexchange.com/questions/131011/use-system-clipboard-in-vi-copy-mode-in-tmux
-      (bind-key "p" "run" { args = [("'tmux set-buffer \"$(xclip -o)\"; tmux paste-buffer'")];})
-
-      (let
-        bind-copy-mode-key = k: args:
-          bind-key "'${k}'" "send" { table = "copy-mode-vi"; args = ["-X"] ++ args; };
-      in [
-        (bind-copy-mode-key "'v'" ["begin-selection"])
-        (bind-copy-mode-key "'V'" ["select-line"])
-        (bind-copy-mode-key "'r'" ["rectangle-toggle"])
-        (bind-copy-mode-key "'y'" ["copy-pipe-and-cancel" (quote "xclip -i -sel p -f | xclip -i -sel c") ])
-      ])
+      ''
+      bind p run "tmux set-buffer \"$(xclip -o)\"; tmux paste-buffer"
+      bind-key -T copy-mode-vi 'v' send -X begin-selection
+      bind-key -T copy-mode-vi 'V' send -X select-line
+      bind-key -T copy-mode-vi 'r' send -X rectangle-toggle
+      bind-key -T copy-mode-vi 'y' send -X copy-pipe-and-cancel "xclip -i -sel p -f | xclip -i -sel c"
+      ''
+      # bind-key -T copy-mode-vi 'y' send -X copy-pipe-and-cancel "xclip -in -selection clipboard"
 
       # move x clipboard into tmux paste buffer
       # move tmux copy buffer into x clipboard
-      (bind-key "C-y" "run" { args = [(quote "tmux save-buffer - | xclip -i")]; })
+      ''
+      bind C-y run "tmux save-buffer - | xclip -i"
+      ''
+
+      # # https://blogs.technet.microsoft.com/jessicadeen/linux/tmux-2-6-copypaste-and-bind-tips-and-tricks/
+      # "bind-key -T copy-mode-vi WheelUpPane send -X scroll-up"
+      # "bind-key -T copy-mode-vi WheelDownPane send -X scroll-down"
+      # # https://unix.stackexchange.com/questions/67673/copy-paste-text-selections-between-tmux-and-the-clipboard#72340
+      # # https://unix.stackexchange.com/questions/131011/use-system-clipboard-in-vi-copy-mode-in-tmux
+      # (bind-key "p" "run" { args = [("'tmux set-buffer \"$(xclip -o)\"; tmux paste-buffer'")];})
+      # (let
+      #   bind-copy-mode-key = k: args:
+      #     bind-key k "send-keys" { table = "copy-mode-vi"; args = ["-X"] ++ args; };
+      # in [
+      #   # https://www.rushiagr.com/blog/2016/06/16/everything-you-need-to-know-about-tmux-copy-pasting/
+      #   (bind-copy-mode-key "v" ["begin-selection"])
+      #   (bind-copy-mode-key "V" ["select-line"])
+      #   (bind-copy-mode-key "r" ["rectangle-toggle"])
+      #   (bind-copy-mode-key "y" ["copy-pipe-and-cancel" (quote "xclip -i -sel p -f | xclip -i -sel c") ])
+      # ])
+
+      # # move x clipboard into tmux paste buffer
+      # # move tmux copy buffer into x clipboard
+      # # (bind-key "C-y" "run" { args = [(quote "tmux save-buffer - | xclip -i")]; })
+
+      # # ''
+      # # bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "reattach-to-user-namespace pbcopy"
+      # # bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "reattach-to-user-namespace pbcopy" \; display-message "highlighted selection copied to system clipboard"
+      # # ''
+      # # End Mouse support --------------------------------------------
 
       # Smart pane switching with awareness of vim splits
       (let
@@ -95,7 +134,7 @@ with pkgs;
         bind-direction = key: dir:
           bind-key key "if-shell" {
             table = "root";
-            args = [ ''"$$${is_vim}" "send-keys ${key}" "select-pane -${dir}"''];
+            args = [ ''"\$${is_vim}" "send-keys ${key}" "select-pane -${dir}"''];
           };
       in
       [ ''
@@ -127,7 +166,6 @@ with pkgs;
             "SSH_AGENT_PID"
             "SSH_CONNECTION"
           ]);
-          mouse = true;          # Enable mouse mode (tmux 2.1 and above)
           allow-rename = false;  # Stop renaming windows automatically
           renumber-windows=true; # But reorder windows automatically
 
@@ -147,11 +185,7 @@ with pkgs;
           bell-action=null; # set-option -g bell-action none
 
           pane = {
-            # border.style = {fg="black";};
-            # border.style = {fg="colour196"; bg="colour238";};
-            border.style = {fg="colour238"; bg="colour196";};
-            # active-border.style = {fg="brightred";};
-            # active-border.style = {fg="colour196"; bg="colour238";};
+            border.style = {fg="colour238"; bg="colour235";};
             active-border.style = {fg="colour51"; bg="colour236";};
           };
 
@@ -193,8 +227,8 @@ with pkgs;
           window-status = {
             # format= quote "#[fg=magenta]#[bg=black] #I #[bg=cyan]#[fg=colour8] #W ";
             format = quote "#I#[fg=colour237]:#[fg=colour250]#W#[fg=colour244]#F ";
-            # style = {bg="green";fg="black";attrs=["reverse"];};
-            style = {fg="colour138"; bg="colour235";attrs=["none"];};
+            style = {bg="green";fg="black";attrs=["reverse"];};
+            # style = {fg="colour138"; bg="colour235";attrs=["none"];};
             bell.style = {fg="colour255"; bg="colour1";attrs=["bold"];};
             current = {
               # format = quote "#[bg=brightmagenta]#[fg=colour8] #I #[fg=colour8]#[bg=colour14] #W ";
@@ -205,6 +239,7 @@ with pkgs;
           };
         };
       })
+      "new-session -n stites"
     ];
   };
 }
