@@ -108,11 +108,11 @@ in
         sha256 = "1ghjrhh8mwv99yb23zgxsvn7xbdgi5rcaf8i5rg0sqj4f9bx4swm";
         meta = {};
       })
-      (buildFirefoxXpiAddon { pname="arxiv-url"; version="0.1"; addonId="e5849ea4-ac8c-4a75-896b-b2578970f1c0";
-        url = "https://addons.mozilla.org/firefox/downloads/file/886406/arxiv_url-0.1-an+fx.xpi";
-        sha256 = "1n89kxmljq8jfll5j9nmb1lssf9avsm832ivd10lfakv262yl3am";
-        meta = {};
-      })
+      # (buildFirefoxXpiAddon { pname="arxiv-url"; version="0.1"; addonId="e5849ea4-ac8c-4a75-896b-b2578970f1c0";
+      #   url = "https://addons.mozilla.org/firefox/downloads/file/886406/arxiv_url-0.1-an+fx.xpi";
+      #   sha256 = "1n89kxmljq8jfll5j9nmb1lssf9avsm832ivd10lfakv262yl3am";
+      #   meta = {};
+      # })
       (buildFirefoxXpiAddon { pname="Arxiv-Vanity"; version="0.1"; addonId="e92bf629-488c-4d5f-8771-04812b17c143";
         url = "https://addons.mozilla.org/firefox/downloads/file/3362708/arxiv_vanity-0.1-fx.xpi";
         sha256 = "0ln0bpq9khkhi7rai4cdrgha670w07brh1f78i9r8c6s0w6lla64";
@@ -131,7 +131,7 @@ in
       multi-account-containers
       refined-github
       ublock-origin
-      umatrix
+      # umatrix
       vim-vixen
     ];
   };
