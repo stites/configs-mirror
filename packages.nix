@@ -164,12 +164,13 @@ let
   unstableNixPkgs =
     let exe = unstable.haskell.lib.justStaticExecutables;
     in (with unstable; [
+      plover.dev
       cabal-install
       stack
       noti
       bat
       rxvt_unicode_with-plugins
-      protonmail-bridge
+      # protonmail-bridge
       prettyping
       # nix-linting
       # zoom-us
