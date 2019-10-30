@@ -18,9 +18,11 @@ in
     "call plug#begin('${builtins.getEnv "HOME"}/.config/nvim/plugged')"
     "Plug 'wakatime/vim-wakatime'"
     "Plug 'neovimhaskell/nvim-hs.vim'"
+    "Plug 'lervag/vimtex'"
     "call plug#end()"
     "let g:wakatime_PythonBinary = '${notPython}'"
     "let g:nvimhsPluginStarter=nvimhs#stack#pluginstarter()"
+    "let g:vimtex_compiler_progname = 'nvr'"
   ];
 }
 
