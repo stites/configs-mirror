@@ -337,6 +337,13 @@ in
         export WAKATIME_HOME="$HOME/.config/wakatime"
         ''
 
+        # completion for kitty
+        ''
+        if command -v kitty > /dev/null; then
+          source <(kitty + complete setup bash)
+        fi
+        ''
+
         host.bash.extraConfig
       ]);
     };
