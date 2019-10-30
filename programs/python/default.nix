@@ -13,49 +13,49 @@ in
         doCheck = false; checkPhase = "true";
       });
 
-      jupyter = import (builtins.fetchGit {
-        url = https://github.com/tweag/jupyterWith;
-        rev = "02b929122d49189a896c9fae044c12db21846f25";
-      }) {};
+      # jupyter = import (builtins.fetchGit {
+      #   url = https://github.com/tweag/jupyterWith;
+      #   rev = "02b929122d49189a896c9fae044c12db21846f25";
+      # }) {};
 
-      jupyterEnvironment =
-        jupyter.jupyterlabWith { kernels = [
-          (jupyter.kernels.iPythonWith {
-            name = "python";
-            packages = p: with p; [ numpy
-              nose (dontCheck celery) mock flake8 pygments          # testing
-              hypothesis pytest pytest-mypy             # testing
-              numpy # compute storage
-              beautifulsoup4 requests                         # web processing
-              # pandas # numba (dontCheck pyarrow) h5py                       # compute storage
-              ipython notebook ipywidgets jupyter             # notebooks
-              matplotlib seaborn tensorflow-tensorboard       # visualization
-              scikitlearn scipy                               # statistics and ML
-              pillow (dontCheck imageio) # pycv (not in nixpkgs) # CV
-              nltk gensim                                     # NLP
-              # # pymc3            # <<< TOTALLY BROKEN           # PPLs
-              # pytorch-world.pytorch # mypytorch mytorchvision probtorch pyro-ppl    # future
-            ];
-          })
-          (jupyter.kernels.iHaskellWith {
-            name = "haskell";
-            packages = p: with p; [ hvega formatting ];
-          })
-        ]; };
+      # jupyterEnvironment =
+      #   jupyter.jupyterlabWith { kernels = [
+      #     (jupyter.kernels.iPythonWith {
+      #       name = "python";
+      #       packages = p: with p; [ numpy
+      #         nose (dontCheck celery) mock flake8 pygments          # testing
+      #         hypothesis pytest pytest-mypy             # testing
+      #         numpy # compute storage
+      #         beautifulsoup4 requests                         # web processing
+      #         # pandas # numba (dontCheck pyarrow) h5py                       # compute storage
+      #         ipython notebook ipywidgets jupyter             # notebooks
+      #         matplotlib seaborn tensorflow-tensorboard       # visualization
+      #         scikitlearn scipy                               # statistics and ML
+      #         pillow (dontCheck imageio) # pycv (not in nixpkgs) # CV
+      #         nltk gensim                                     # NLP
+      #         # # pymc3            # <<< TOTALLY BROKEN           # PPLs
+      #         # pytorch-world.pytorch # mypytorch mytorchvision probtorch pyro-ppl    # future
+      #       ];
+      #     })
+      #     (jupyter.kernels.iHaskellWith {
+      #       name = "haskell";
+      #       packages = p: with p; [ hvega formatting ];
+      #     })
+      #   ]; };
 
-      python36 = pkgs.python36.override {
-        packageOverrides = pself: psuper: {
-          matplotlib  = dontCheck (psuper.matplotlib.override { enableQt = true; });
-          scipy = dontCheck psuper.scipy;
-          beautifulsoup4 = dontCheck psuper.beautifulsoup4;
-        };
-        self = python36;
-      };
+      # python36 = pkgs.python36.override {
+      #   packageOverrides = pself: psuper: {
+      #     matplotlib  = dontCheck (psuper.matplotlib.override { enableQt = true; });
+      #     scipy = dontCheck psuper.scipy;
+      #     beautifulsoup4 = dontCheck psuper.beautifulsoup4;
+      #   };
+      #   self = python36;
+      # };
 
-      mypython36 = python36.withPackages (ps: with ps; [
+      mypython36 = pkgs.python3.withPackages (ps: with ps; [
         # dev packages
         mccabe mypy nose pycodestyle pydocstyle
-        jedi flake8 pygments pytest-mypy pyls-isort pyls-mypy pyflakes yapf
+        jedi flake8 pygments pytest-mypy pyls-isort pyls-mypy pyflakes yapf black pylint
         typeguard
 
         beautifulsoup4 requests                         # web processing
@@ -74,26 +74,36 @@ in
         # pytorch-world.pytorch # mypytorch mytorchvision probtorch pyro-ppl    # future
 
       ]);
-      justExes = pkgs.stdenv.mkDerivation {
+      specificExes = pkgs.stdenv.mkDerivation {
         name = "my-python-executables";
         buildPhase = "";
-        # buildInputs = [ mypython36 pkgs.makeWrapper ];
         buildInputs = [ pkgs.makeWrapper ];
-        propagatedBuildInputs = [ jupyterEnvironment ];
+        # propagatedBuildInputs = [ jupyterEnvironment ];
+        propagatedBuildInputs = [ mypython36 ];
         src = ./.;
         installPhase = let
+          wrapAndKeep = bin: new: flags:
+            (wrapPyBin bin new flags) + "\n" + (keepPyBin bin);
+
           wrapPyBin = bin: new: flags:
-            "makeWrapper ${jupyterEnvironment}/bin/${bin} $out/bin/${new} "
+            "makeWrapper ${mypython36}/bin/${bin} $out/bin/${new} "
             + (if flags != "" then "--add-flags \"${flags}\"" else "");
+
+          keepPyBin = bin: "cp ${mypython36}/bin/${bin} $out/bin/${bin}";
           in lib.strings.concatStringsSep "\n" [
             "mkdir -p $out/bin"
-            # "${wrapPyBin  "python"          "py"  ""}"
-            # "${wrapPyBin "ipython"          "ipy" "--profile=default"}"
-            # "${wrapPyBin "jupyter"          "jp"  ""}"
-            # "${wrapPyBin "jupyter-notebook" "nb"  ""}"
-            # "${wrapPyBin "tensorboard"      "tb"  ""}"
+            "${wrapAndKeep  "python"          "py"      ""}"
+            "${wrapAndKeep "ipython"          "ipy" "--profile=default"}"
+            "${wrapAndKeep "jupyter"          "jp"  ""}"
+            "${wrapAndKeep "jupyter-notebook" "nb"  ""}"
+            "${wrapAndKeep "tensorboard"      "tb"  ""}"
+            "${keepPyBin "flake8"}"
+            "${keepPyBin "black"}"
+            "${keepPyBin "pytest"}"
+            "${keepPyBin "mypy"}"
+            "${keepPyBin "pylint"}"
           ];
       };
-    in mypython36)
+    in specificExes)
   ];
 }
