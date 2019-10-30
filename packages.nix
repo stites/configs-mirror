@@ -105,15 +105,6 @@ let
       (exe haskellPackages.hspec-discover)
       (exe haskellPackages.ghcid)
 
-      # extra git stuff
-      tig
-      git-radar
-      git-secrets # FIXME: add "install hook if you own the repository" warning on cd
-      gitAndTools.git-extras
-      gitAndTools.diff-so-fancy
-      gitAndTools.hub
-      gitAndTools.git-annex
-
       # profiling tools
       hyperfine
       flamegraph

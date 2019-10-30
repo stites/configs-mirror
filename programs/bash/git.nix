@@ -7,7 +7,7 @@ in
   shellAliases = {
 
     # git
-    git   = "${nix-profile}/bin/hub";
+    git   = "${nix-profile}/bin/lab";
     g     = "git ";
     gf    = "git fetch";
     gl    = "git log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ad @ %cr) %C(bold blue)<%an>%Creset' --graph --abbrev-commit --date=short";

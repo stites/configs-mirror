@@ -4,6 +4,18 @@ let
   secrets = import ../secrets.nix;
 in
 {
+
+  home.packages = with pkgs; [
+    tig
+    git-radar
+    git-secrets # FIXME: add "install hook if you own the repository" warning on cd
+    gitAndTools.git-extras
+    gitAndTools.diff-so-fancy
+    gitAndTools.hub
+    gitAndTools.lab
+    # gitAndTools.git-annex
+  ];
+
   xdg.dataFile."git-hooks" = {
     executable = true;
     target = "../bin/git-hooks";
