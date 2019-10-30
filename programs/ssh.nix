@@ -1,15 +1,17 @@
+{ pkgs, lib, ... }:
 let
   secrets = import ../secrets.nix;
+  useKeychain = builtins.getEnv "HOSTNAME" == "lambek";
 in
 {
-  # programs.keychain = {
-  #   enable = true;
-  #   enableBashIntegration = true;
-  #   enableZshIntegration = false;
-  #   agents = [ "ssh" "gpg" ];
-  #   inheritType = null;
-  #   keys = [ "id_rsa" "id_ed25519" secrets.gpg.signing-key ];
-  # };
+  programs.keychain = lib.optionalAttrs useKeychain {
+    enable = true;
+    enableBashIntegration = true;
+    enableZshIntegration = false;
+    agents = [ "ssh" "gpg" ];
+    inheritType = null;
+    keys = [ "id_rsa" "id_ed25519" secrets.gpg.signing-key ];
+  };
   # Just use nixos-gnome-keyring for this
   services.gnome-keyring = {
     enable = true;
