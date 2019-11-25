@@ -53,6 +53,7 @@ let
       fd
       xclip
       ripgrep
+      ripgrep-all
       gawk
       less
       lesspipe
@@ -73,7 +74,6 @@ let
       par
       tree
       wget
-      fasd
       httpie
       exa
       colordiff
@@ -86,7 +86,7 @@ let
       gotty
       graphviz
       sqlite
-      sqliteman
+      # sqliteman # <<< broken
       universal-ctags
 
       # haskell
@@ -104,6 +104,14 @@ let
       (exe haskellPackages.hasktags)
       (exe haskellPackages.hspec-discover)
       (exe haskellPackages.ghcid)
+      (exe haskellPackages.hp2pretty)
+      (exe haskellPackages.doctest)
+      (exe haskellPackages.stylish-haskell)
+      (exe haskellPackages.apply-refact)
+      (exe haskellPackages.cabal-plan)
+      (exe haskellPackages.weeder)
+      # (exe haskellPackages.threadscope)
+      (exe haskellPackages.haddock)
 
       # profiling tools
       hyperfine
@@ -179,6 +187,7 @@ let
       (exe haskellPackages.glirc)
 
       ngrok
+      toggldesktop
 
       # BROKEN
       # (exe haskellPackages.git-monitor)
@@ -239,8 +248,25 @@ let
         # cuda-shell
     ]) else [];
 
+  purescriptpkgs = let
+      easyPS = import (pkgs.fetchFromGitHub {
+      owner = "justinwoo";
+      repo = "easy-purescript-nix";
+      rev = "6be3f48f339034a58b1b1ae997ace534cf459826";
+      sha256 = "10fxfxgbpr920bj69jail8vsj6qj5cf4g2r5brxiv23fz8nkzf5n";
+    }) {inherit pkgs;};
+  in with easyPS; [
+    purescript
+    purs
+    spago
+  ];
+
 in
   {
-    home.packages = stableNixPkgs ++ unstableNixPkgs ++ unstableNixOS;
+    home.packages = stableNixPkgs
+      ++ unstableNixPkgs
+      ++ unstableNixOS
+      ++ purescriptpkgs
+      ;
   }
 
