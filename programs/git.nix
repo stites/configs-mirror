@@ -173,6 +173,7 @@ in
       ".DS_Store"
       ".agignore"
       ".stites"
+      ".vim"
       "*/infinitest.filters"
       "codex.tags"
       "tags"
