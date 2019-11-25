@@ -22,7 +22,7 @@ in
   manual.manpages.enable = true;
 
   nixpkgs.overlays = [
-    (import ./overlays/pytorch-world.nix)
+    # (import ./overlays/pytorch-world.nix)
     (import ./overlays/starship.nix)
   ];
 
@@ -154,6 +154,7 @@ in
     ./programs/ghci.nix
     ./programs/codex.nix
     ./programs/fasd.nix
+    # ./programs/pazi.nix
     ./programs/keybase.nix
     ./programs/ssh.nix
     ./programs/bat.nix
@@ -169,6 +170,7 @@ in
     ./programs/nodejs.nix
     ./programs/mimeApps.nix
     ./programs/firefox.nix
+    ./programs/lorri.nix
     ./experiments.nix
   # ] ++ lib.optionals host.is.NixOS [(import ./programs/xmonad { inherit termcommand;})];
     (import ./programs/xmonad { inherit termcommand;})
