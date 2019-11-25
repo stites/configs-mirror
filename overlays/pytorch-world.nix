@@ -4,7 +4,8 @@ let
     owner = "stites";
     repo = "pytorch-world";
     rev = "unstable"; # bcf6b53c208ccb416601f2e40f04a655b44421be
-    sha256 = "0rjzl4ipci4y7jgbhjsmh28l7wa607y34f01nbc7p710fjf2cm6l";
+    sha256 = "1i012ld8j0j3x152g2ra4bqyy6sial6hwbai4z7na8ac1hbpicn8";
+
   };
 
   pyt-pkgs = import "${pyt-world}/pin/nixpkgs.nix" { inherit (super) config; };
