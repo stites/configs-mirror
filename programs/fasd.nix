@@ -1,4 +1,7 @@
+{ pkgs, ...}:
+
 {
+  home.packages = [ pkgs.fasd ];
   home.file.".fasdrc".text = ''
     # Fasd defaults to track your "$PWD". Set this to 0 to disable this behavior.
     # _FASD_TRACK_PWD=0
