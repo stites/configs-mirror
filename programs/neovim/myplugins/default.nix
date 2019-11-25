@@ -11,11 +11,13 @@ let
     ./vim-sandwich.nix
     ./vim-commentary.nix
     ./vim-eunuch.nix
+    ./vim-gutentags.nix
   ] ++ tmux-plugins
     ++ vim-plug-plugins
     ++ txt-plugins
     ++ layout-plugins
-    ++ coc-plugins
+    # ++ coc-plugins
+    ++ languageClient
     ;
 
   tmux-plugins = [
@@ -40,6 +42,10 @@ let
     ./fzf-vim.nix
     ./vim-gitgutter.nix
     ./rainbow.nix
+  ];
+
+  languageClient = [
+    ./LanguageClient-neovim/default.nix
   ];
 
   coc-plugins = let usetabnine = false; in [

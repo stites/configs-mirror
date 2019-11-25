@@ -95,7 +95,6 @@ in
     (self: super: let
       unstable = import <unstable> {};
     in {
-      neovim = unstable.neovim;
       vimPlugins = unstable.vimPlugins;
       all-hies = import (fetchTarball "https://github.com/infinisil/all-hies/tarball/master") {};
     })
@@ -124,80 +123,28 @@ in
     withNodeJs = true;
     withPython3 = true;
     withRuby = true;
+    package = pkgs.unstable.neovim.override {
+      configure = {
+        # CHECK OUT THIS FOR UPDATED CONTENT: https://nixos.wiki/wiki/Vim
+        customRC = (pkgs.callPackage ./config.nix {}).extraConfig + myplugins.extraConfig;
 
-    # CHECK OUT THIS FOR UPDATED CONTENT: https://nixos.wiki/wiki/Vim
-    extraConfig = (pkgs.callPackage ./config.nix {}).extraConfig + myplugins.extraConfig;
+        # https://github.com/NixOS/nixpkgs/blob/master/doc/languages-frameworks/vim.section.md
+        packages.myVimPackage = { # with pkgs.vimPlugins; {
+          # vim-plug management: loaded on launch
+          # see examples below how to use custom packages
+          start = myplugins.plugins;
 
-    # extraConfig = lib.strings.concatStringsSep "\n" (
-    #   (import ./config.nix).extraConfig ++ [
-    #   configs.layout.rc
-    #   # configs.git.rc
-    #   # configs.cplusplus.rc
-    #   # configs.haskell.rc
-    #   # configs.lsp.rc
-    #   configs.coc.rc
-    #   configs.python.rc
-    #   configs.surround.rc
-    #   configs.spelling.rc
-    #   configs.textmanipulation.rc
-    #   configs.tmux.rc
+          # If a Vim plugin has a dependency that is not explicitly listed in
+          # opt that dependency will always be added to start to avoid confusion.
+          opt = [ ];
+        };
+      };
+    };
 
-    #   # enable spell checking
-    #   # autocmd BufRead,BufNewFile *.md setlocal spell spelllang=en_us
-    #   # autocmd FileType gitcommit setlocal spell spelllang=en_us
-
-    #   # let g:ctrlp_user_command = 'ag %s -l --nocolor --hidden -g ""'
-    #   # let g:ctrlp_max_files=0
-    #   # let g:ctrlp_show_hidden=1
-    #   # let g:ctrlp_custom_ignore =
-    #   #   \ {
-    #   #   \   'dir': '\v[\/](.git|.cabal-sandbox|.stack-work)$',
-    #   #   \   'file': '\v\.(o|hi|beam|dyn_hi|dyn_o)$'
-    #   #   \ }
-
-    #   # vim-session ==================================================================
-    #   ''
-    #   let g:session_autosave = 'no'
-    #   ''
-
-    #   # work with neomutt ============================================================
-    #   ''
-    #   au BufRead /tmp/neomutt-* set tw=72
-    #   augroup filetypedetect
-    #     " Mail
-    #     autocmd BufRead,BufNewFile *mutt-*  setfiletype mail
-    #   augroup END
-    #   ''
-
-    #   # bufkill-vim ==================================================================
-    #   ''
-    #   nmap <C-w> :BD<CR>
-    #   ''
-
-    #   # vim-polyglot =================================================================
-    #   ''
-    #   let g:polyglot_disabled = ['elm', 'haskell']
-    #   ''
-
-    #   # COLLISION WITH COC.NVIM
-    #   # # ack.vim ======================================================================
-    #   # # don't jump to the first result automatically.
-    #   # ''
-    #   # cnoreabbrev Ack Ack!
-    #   # " use ripgrep or the_silver_searcher (in that order), follow symlinks
-    #   # if executable('rg')
-    #   #   let g:ackprg = 'rg -L --vimgrep'
-    #   # elseif executable('ag')
-    #   #   let g:ackprg = 'ag -f --vimgrep'
-    #   # endif
-
-    #   # " bind to a
-    #   # nnoremap <Leader>a :Ack!<Space>
-
-    #   # " search on the current word
-    #   # nmap \f      :Ack "\b<cword>\b" <CR>
-    #   # nmap <Esc>f  :Ack "\b<cword>\b" <CR>
-    #   # ''
+    ###########################################################################
+    # vim-plug automatically executes `filetype plugin indent on` and `syntax enable`.
+    # You can revert the settings after the call. (e.g. filetype indent off, syntax off, etc.)
+    # plugins = myplugins.plugins;
 
     #   # ===============================================================================
     #   ''
@@ -284,79 +231,20 @@ in
     #   " Disable all session locking - I know what I'm doing :-).
     #   " let g:session_lock_enabled = 0
 
-    #   ''
-    #   # ==============================================================================
-    #   # rainbow_parentheses.vim
-    #   ''
-    #   let g:rbpt_colorpairs = [
-    #       \ ['red',         'firebrick3'],
-    #       \ ['brown',       'RoyalBlue3'],
-    #       \ ['Darkblue',    'SeaGreen3'],
-    #       \ ['darkgray',    'DarkOrchid3'],
-    #       \ ['darkgreen',   'firebrick3'],
-    #       \ ['darkcyan',    'RoyalBlue3'],
-    #       \ ['darkred',     'SeaGreen3'],
-    #       \ ['darkmagenta', 'DarkOrchid3'],
-    #       \ ['brown',       'firebrick3'],
-    #       \ ['gray',        'RoyalBlue3'],
-    #       \ ['black',       'SeaGreen3'],
-    #       \ ['darkmagenta', 'DarkOrchid3'],
-    #       \ ['Darkblue',    'firebrick3'],
-    #       \ ['darkgreen',   'RoyalBlue3'],
-    #       \ ['darkcyan',    'SeaGreen3'],
-    #       \ ['darkred',     'DarkOrchid3'],
-    #       \ ]
+    # Files, backups and undo {{{
 
+    ## # # ALTERNATIVE: Utility function to delete trailing white space
+    ## # ''
+    ## # fun! DeleteTrailingWS()
+    ## #   exe "normal mz"
+    ## #   %s/\s\+$//ge
+    ## #   exe "normal `z"
+    ## # endfun
+    ## # " autocmd BufWritePre * :call DeleteTrailingWS()
+    ## # ''
+    ## # }}}
 
-    #   " Activation based on file type
-    #   augroup rainbow_lisp
-    #     autocmd!
-    #     " autocmd FileType * RainbowParenthesesActive
-    #     autocmd FileType lisp,clojure,scheme,haskell,python RainbowParenthesesActivate
-    #   augroup END
-
-    #   " au VimEnter * RainbowParenthesesToggle
-    #   " au Syntax * RainbowParenthesesLoadRound
-    #   " au Syntax * RainbowParenthesesLoadSquare
-    #   " au Syntax * RainbowParenthesesLoadBraces
-    #   ''
-
-    #   # ''
-    #   # " " Adjust signscolumn to match wombat
-    #   # " hi! link SignColumn LineNr
-    #   # "
-    #   # " " Use pleasant but very visible search hilighting
-    #   # " hi Search ctermfg=white ctermbg=173 cterm=none guifg=#ffffff guibg=#e5786d gui=none
-    #   # " hi! link Visual Search
-    #   # "
-    #   # " " Match wombat colors in nerd tree
-    #   # " hi Directory guifg=#8ac6f2
-    #   # "
-    #   # " " Searing red very visible cursor
-    #   # " hi Cursor guibg=red
-    #   # ''
-
-    #   # Files, backups and undo {{{
-
-    #   ## # # ALTERNATIVE: Utility function to delete trailing white space
-    #   ## # ''
-    #   ## # fun! DeleteTrailingWS()
-    #   ## #   exe "normal mz"
-    #   ## #   %s/\s\+$//ge
-    #   ## #   exe "normal `z"
-    #   ## # endfun
-    #   ## # " autocmd BufWritePre * :call DeleteTrailingWS()
-    #   ## # ''
-    #   ## # }}}
-    #   # not installed
-    #   # # Fuzzy find files
-    #   # ''
-    #   # nnoremap <silent> <Leader><space> :CtrlP<CR>
-    #   # let g:ctrlp_max_files=0
-    #   # let g:ctrlp_show_hidden=1
-    #   # let g:ctrlp_custom_ignore = { 'dir': '\v[\/](.git|.cabal-sandbox|.stack-work)$' }
-    #   # ''
-
+    # not installed
     #   ''
     #   function! CmdLine(str)
     #     exe "menu Foo.Bar :" . a:str
@@ -426,10 +314,5 @@ in
     #   # Tabnine experiment
     #   # "set rtp+=~/tabnine-vim"
     # ]);
-
-    ###########################################################################
-    # vim-plug automatically executes `filetype plugin indent on` and `syntax enable`.
-    # You can revert the settings after the call. (e.g. filetype indent off, syntax off, etc.)
-    plugins = myplugins.plugins;
   };
 }
