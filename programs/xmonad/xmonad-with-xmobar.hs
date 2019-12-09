@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeOperators #-}
-
+{-# LANGUAGE TupleSections #-}
 import Data.Monoid ((<>))
 import System.IO (hPutStrLn)
 import Control.Monad.IO.Class (liftIO)
@@ -11,6 +11,7 @@ import System.Exit (ExitCode(ExitSuccess), exitWith)
 import XMonad
 import XMonad.Actions.CycleWS (nextWS, prevWS, shiftToPrev, shiftToNext)
 import XMonad.Actions.DynamicWorkspaces (addWorkspacePrompt, removeEmptyWorkspace)
+import XMonad.Actions.SpawnOn (spawnOn, manageSpawn)
 import XMonad.Actions.Search
 import XMonad.Actions.Submap
 import XMonad.Config.Desktop
@@ -68,21 +69,30 @@ main
   myConfig
     = ewmh
     $ desktopConfig
-      -- $ xfceConfig
-        { modMask           = mod4Mask  -- Rebind Mod to super
-        , terminal          = "kitty --single-instance" -- "urxvt" -- "/home/stites/.local/bin/termonad"
-        , workspaces        = show <$> [1 .. 6]
-        , borderWidth       = 4
-        , focusFollowsMouse = False
-        , manageHook        = manageDocks <+> manageHook def <+> launcherHook
-        , layoutHook        = myLayout
-        , handleEventHook   = docksEventHook <+> handleEventHook def
-        -- , startupHook = startup_hook
-        } `EZ.removeKeysP` removeKeys'
-          `EZ.additionalKeysP` additionalKeys'
+      { modMask           = mod4Mask  -- Rebind Mod to super
+      , terminal          = "kitty --single-instance" -- "urxvt" -- "/home/stites/.local/bin/termonad"
+      , workspaces        = show <$> [1 .. 6]
+      , borderWidth       = 4
+      , focusFollowsMouse = False
+      , manageHook        = manageDocks <+> launcherHook <+> manageSpawn <+> manageHook def
+      , layoutHook        = myLayout
+      , handleEventHook   = docksEventHook <+> handleEventHook def
+      , startupHook = do
+        spawnOn "1" "slack"
+        spawnOn "1" "signal-desktop"
+        -- spawnOn "1" "Gitter"
+        spawnOn "2" "firefox"
+        spawnOn "2" "kitty -1"
+        spawnOn "3" "zotero"
+        spawnOn "3" "protonmail-bridge"
+        spawnOn "3" "thunderbird"
+        spawnOn "4" "sudo plover"
+      } `EZ.removeKeysP` removeKeys'
+        `EZ.additionalKeysP` additionalKeys'
 
   launcherHook :: ManageHook
   launcherHook = resource =? launcherString --> doIgnore
+
 
 type (:+) f g = Choose f g
 infixr 5 :+
@@ -127,7 +137,6 @@ additionalKeys'
   <> applications
   <> system
   <> binaryPartitionLayout
-  -- <> bspLayoutKeys
   where
     windowsAndWorkspace :: [(String, X ())]
     windowsAndWorkspace =
@@ -147,33 +156,25 @@ additionalKeys'
       [ ("M-o d",        spawn "thunar")
       , ("M-o h",        promptSearch xpconfig hackage)
       , ("M-<Return>",   spawn =<< asks (terminal . config))
-      -- , ("C-S-<Space>",  spawn "albert show")
       , ("<Print>",      spawn "flameshot gui")
-      -- , ("M-i",          spawn "google-chrome-stable")
 
       , ("C-S-<Space>",  spawn launcherString) -- old OSX style
       , ("M-p",          spawn launcherString) -- linux style
       ]
 
     system :: [(String, X ())]
-    system =
-      [ ("M-S-<Delete>", spawn "sudo hibernate")
-      -- , ("M-S-l",    spawn "xfce4-session-logout")
-      , ("<LMeta>-;",              spawn "autorandr --change")
-      , ("C-S-<F7>",               spawn "autorandr --change")
-      , ("<XF86AudioMute>",        spawn "amixer -q sset Master toggle")
-      , ("<XF86AudioLowerVolume>", spawn "amixer -q sset Master 3%-")
-      , ("<XF86AudioRaiseVolume>", spawn "amixer -q sset Master 3%+")
+    system = concat
+      [ fmap (,spawn "amixer -q sset Master toggle") ["C-S-<F1>", "<XF86AudioMute>"]
+      , fmap (,spawn "amixer -q sset Master 3%-")    ["C-S-<F2>", "<XF86AudioLowerVolume>"]
+      , fmap (,spawn "amixer -q sset Master 3%+")    ["C-S-<F3>", "<XF86AudioRaiseVolume>"]
+      , fmap (,spawn "xbacklight -dec 10")           ["C-S-<F5>", "<XF86MonBrightnessDown>"]
+      , fmap (,spawn "xbacklight -inc 10")           ["C-S-<F6>", "<XF86MonBrightnessUp>"]
+      , fmap (,spawn "xscreensaver-command -lock")   ["C-S-<F7>", "<XF86ModeLock>"]
 
-      , ("C-S-<F8>",               spawn "xbacklight -dec 10")
-      , ("<F86MonBrightnessDown>", spawn "xbacklight -dec 10")
-
-      , ("C-S-<F9>",               spawn "xbacklight -inc 10")
-      , ("<XF86MonBrightnessUp>",  spawn "xbacklight -inc 10")
-
-      , ("C-S-<F12>", spawn "xscreensaver-command -lock")
-      , ("<Scroll_lock>", spawn "xscreensaver-command -lock")
-      , ("M-b", sendMessage ToggleStruts)
+      , [ ("M-b", sendMessage ToggleStruts)
+        , ("M-S-<Delete>", spawn "pm-hibernate")
+        -- , ("M-S-l",    spawn "xfce4-session-logout")
+        ]
       ]
 
     binaryPartitionLayout =
