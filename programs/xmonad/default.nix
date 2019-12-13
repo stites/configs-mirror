@@ -112,7 +112,7 @@ in
       "module/battery" = {
         type = "internal/battery";
         # This is useful in case the battery never reports 100% charge
-        full-at = 99;
+        full-at = 94;
         # Use the following command to list batteries and adapters:
         # $ ls -1 /sys/class/power_supply/
         battery = "BAT0";
